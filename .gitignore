@@ -9,3 +9,5 @@ sqlite.db
 *.sqlite3
 *.db
 *.log
+*/migrations/*
+!*/migrations/__init__.py

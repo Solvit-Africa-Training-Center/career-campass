@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: 🎓 Career Compass API
+  version: 1.0.0
+  description: |-
+    The Career Compass API provides tools and resources to guide high school students through career orientation, personalized university recommendations, and academic planning.
+
+    ### Features:
+    - Student career orientation & skills assessment
+    - Career guidance & pathway recommendations
+    - University and program matching based on student profiles
+    - Access to resources for informed decision-making
+
+    This documentation provides details on available endpoints, request/response formats, and usage guidelines for developers and integrators.
+  contact:
+    name: Career Compass Team
+    email: support@careercompass.org
+    url: https://careercompass.org
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+paths: {}
+components: {}
