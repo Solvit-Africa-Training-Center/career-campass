@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'rest_framework_simplejwt.token_blacklist',
+    'accounts',
     
 ]
 
@@ -188,3 +189,5 @@ SPECTACULAR_SETTINGS = {
     'SCHEMA_PATH_PREFIX': '/api/v1',
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
 }
+
+AUTH_USER_MODEL = 'accounts.User'
