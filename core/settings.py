@@ -172,8 +172,11 @@ SPECTACULAR_SETTINGS = {
         "- Career guidance & pathway recommendations\n"
         "- University and program matching based on student profiles\n"
         "- Access to resources for informed decision-making\n\n"
+        "- to access it virtually we gonna use tunnels\n"
         "This documentation provides details on available endpoints, request/response formats, "
         "and usage guidelines for developers and integrators."
+        
+
     ),
     'VERSION': '1.0.0',
     'CONTACT': {
@@ -188,6 +191,9 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': '/api/v1',
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    
 }
 
 AUTH_USER_MODEL = 'accounts.User'
+
+ALLOWED_HOSTS=['*']

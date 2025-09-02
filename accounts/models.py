@@ -10,6 +10,7 @@ class Role(models.Model):
     """
 
     name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -72,6 +73,7 @@ class Profile(models.Model):
     city = models.CharField(max_length=50, null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)  # configure the media settings
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -85,6 +87,7 @@ class Student(models.Model):
     target_countries = models.JSONField(default=list, blank=True)
     intended_major = models.CharField(max_length=100, blank=True)
     targeted_fields= models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Student: {self.user.email}"
