@@ -4,13 +4,14 @@ from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from rest_framework import generics
 
-from .serializers import LoginSerializer, UserSerializer
+from .serializers import LoginSerializer, UserSerializer,ResendOTPSerializer,VerifyEmailSerializer,RegisterRequestSerializer
 
 from .models import Profile, Student, Agent, Role
 from .serializers import (
@@ -18,6 +19,7 @@ from .serializers import (
     AgentSerializer, RoleSerializer
 )
 from .mixins import SoftDeleteMixin
+from .utils import send_otp_via_email
 
 User = get_user_model()
 
@@ -27,32 +29,106 @@ class RoleViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     serializer_class = RoleSerializer
     http_method_names = ["get", "post", "put", "delete"]
 
+@extend_schema(
+    tags=["Authentication"],
+    request=RegisterRequestSerializer,
+    description="Register a new user and send OTP for email verification."
+)
+class RegisterAPIView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterRequestSerializer
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        # Create user, inactive until email verified
+        user = serializer.save(is_active=True, is_verified=False)
+        # Generate OTP
+        otp = user.generate_otp()
+        # Send OTP via email
+        send_otp_via_email(user.email, otp)
+
+@extend_schema(
+    tags=["Authentication"],
+    request=VerifyEmailSerializer,
+    description="Verify user email using OTP."
+)
+class VerifyEmailAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = VerifyEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        otp = serializer.validated_data["otp"]
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_otp_valid(otp):
+            user.is_verified = True
+            user.otp = None
+            user.otp_created_at = None
+            user.save()
+            return Response({"detail": "Email verified successfully."}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+    tags=["Authentication"],
+    request=ResendOTPSerializer,
+    description="Resend OTP for email verification."
+)
+class ResendOTPAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ResendOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_verified:
+            return Response({"detail": "Email already verified."}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp = user.generate_otp()
+        send_otp_via_email(user.email, otp)
+        return Response({"detail": "OTP resent successfully."}, status=status.HTTP_200_OK)
+    
+
+
 @extend_schema(tags=["Users"], description="Retrieve, create, update or soft-delete users.")
 class UserViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ["get", "post", "put", "delete"]
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["get", "put", "delete"]
 
 @extend_schema(tags=["Profiles"], description="Retrieve, create, update or soft-delete profiles.")
 class ProfileViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Profile.objects.filter(is_active=True)
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     http_method_names = ["get", "post", "put", "delete"]
 
 @extend_schema(tags=["Students"], description="Retrieve, create, update or soft-delete students.")
 class StudentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Student.objects.filter(is_active=True)
     serializer_class = StudentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     http_method_names = ["get", "post", "put", "delete"]
 
 @extend_schema(tags=["Agents"], description="Retrieve, create, update or soft-delete agents.")
 class AgentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Agent.objects.filter(is_active=True)
     serializer_class = AgentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     http_method_names = ["get", "post", "put", "delete"]
 
 
@@ -65,7 +141,7 @@ class AgentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
 )
 class LoginAPIView(APIView):
     """
-    User login and return JWT tokens (access + refresh).
+    User login and return JWT tokens (access + refresh). Only verified users can login.
     """
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
@@ -77,8 +153,12 @@ class LoginAPIView(APIView):
 
         if not user:
             return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
         if not user.is_active:
             return Response({"detail": "User account is inactive."}, status=status.HTTP_403_FORBIDDEN)
+
+        if not user.is_verified:
+            return Response({"detail": "Email not verified. Please verify first."}, status=status.HTTP_403_FORBIDDEN)
 
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
@@ -95,6 +175,7 @@ class LoginAPIView(APIView):
             },
         }, status=status.HTTP_200_OK)
 
+
 @extend_schema(
     tags=["Authentication"],
     request=None,
@@ -105,7 +186,7 @@ class LogoutAPIView(APIView):
     """
     Logout user by blacklisting their refresh token.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get("refresh")
@@ -158,3 +239,47 @@ class CustomTokenRefreshView(TokenRefreshView):
             "refresh": refresh_token,  # optionally return the same refresh token
             "user": user_data
         }, status=status.HTTP_200_OK)
+    
+
+class AssignRoleAPIView(APIView):
+    """
+    Assign or remove roles from a user.
+    """
+    permission_classes = [permissions.AllowAny]  #  now in test mode we allow and but usually, Only admins can modify roles
+
+    @extend_schema(
+        tags=["Roles"],
+        description="Assign or remove roles for a specific user.",
+        parameters=[
+            OpenApiParameter("user_id", type=int, description="ID of the user"),
+            OpenApiParameter("role_ids", type=[int], description="List of role IDs to assign"),
+            OpenApiParameter("action", type=str, description="Action: 'add' or 'remove'")
+        ],
+        request=None,
+        responses={200: RoleSerializer(many=True)}
+    )
+    def post(self, request, *args, **kwargs):
+        user_id = request.data.get("user_id")
+        role_ids = request.data.get("role_ids", [])
+        action = request.data.get("action")
+
+        # Validate user
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Validate roles
+        roles = Role.objects.filter(id__in=role_ids)
+        if not roles.exists():
+            return Response({"detail": "No valid roles provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == "add":
+            user.roles.add(*roles)
+        elif action == "remove":
+            user.roles.remove(*roles)
+        else:
+            return Response({"detail": "Invalid action. Use 'add' or 'remove'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.save()
+        return Response({"detail": "Roles updated successfully.", "roles": RoleSerializer(user.roles.all(), many=True).data})    

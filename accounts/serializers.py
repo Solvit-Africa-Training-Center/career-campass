@@ -26,7 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "email", "password", "roles", "is_active", "is_staff", "created_at")
+        fields = '__all__'
         extra_kwargs = {
             "password": {"write_only": True}
         }
@@ -91,3 +91,28 @@ class LoginSerializer(serializers.Serializer):
             "email": user.email,
             "roles": [role.code for role in user.roles.all()],
         }
+
+
+
+class VerifyEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
+class ResendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class RegisterRequestSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model = User
+        fields = ["email", "password"]  # only email and password
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)     # hash the password
+        user.is_active = True           # allow login only after verification if needed
+        user.is_verified = False        # email verification pending
+        user.save()
+        return user    

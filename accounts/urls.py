@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CustomTokenRefreshView, LoginAPIView, LogoutAPIView, UserViewSet, ProfileViewSet, StudentViewSet, AgentViewSet, RoleViewSet
+from .views import CustomTokenRefreshView, LoginAPIView, LogoutAPIView, UserViewSet, ProfileViewSet, StudentViewSet, AgentViewSet, RoleViewSet,RegisterAPIView,VerifyEmailAPIView,ResendOTPAPIView,AssignRoleAPIView
 
 router = DefaultRouter()
 router.register(r"roles", RoleViewSet)
@@ -13,5 +13,9 @@ urlpatterns = [
     path("", include(router.urls)),
     path("login/", LoginAPIView.as_view(), name="login"),
     path("logout/", LogoutAPIView.as_view(), name="logout"),
+    path("register/", RegisterAPIView.as_view(), name="register"),
+    path("verify-email/", VerifyEmailAPIView.as_view(), name="verify_email"),
+    path("resend-otp/", ResendOTPAPIView.as_view(), name="resend_otp"),
     path("token/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
+    path("assign-role/", AssignRoleAPIView.as_view(), name="assign_role"),
 ]
