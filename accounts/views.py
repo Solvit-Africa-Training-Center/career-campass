@@ -4,14 +4,14 @@ from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny,IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics
 
-from .serializers import LoginSerializer, LogoutSerializer, UserRoleSerializer, UserRoleSerializer, UserSerializer,ResendOTPSerializer,VerifyEmailSerializer,RegisterRequestSerializer
+from .serializers import LoginSerializer, UserSerializer
 
 from .models import Profile, Student, Agent, Role
 from .serializers import (
@@ -186,7 +186,7 @@ class LogoutAPIView(APIView):
     """
     Logout user by blacklisting their refresh token.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = LogoutSerializer(data=request.data)
@@ -241,61 +241,3 @@ class CustomTokenRefreshView(TokenRefreshView):
             "refresh": refresh_token,  # optionally return the same refresh token
             "user": user_data
         }, status=status.HTTP_200_OK)
-    
-
-@extend_schema(
-    tags=["Roles"],
-    request=UserRoleSerializer,
-    responses={200: UserRoleSerializer},
-    description="Assign role to user."
-)
-class AssignRolesAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        """
-        Assign multiple roles to a user.
-        """
-        serializer = UserRoleSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user_id = serializer.validated_data["user_id"]
-        role_ids = serializer.validated_data["role_ids"]
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        roles = Role.objects.filter(id__in=role_ids, is_active=True)
-        if not roles.exists():
-            return Response({"detail": "No valid roles found"}, status=status.HTTP_404_NOT_FOUND)
-
-        user.roles.add(*roles)
-        return Response({"detail": f"{roles.count()} role(s) assigned to user {user.email}"}, status=status.HTTP_200_OK)
-
-@extend_schema(
-    tags=["Roles"],
-    request=UserRoleSerializer,
-    responses={200: UserRoleSerializer},
-    description="Remove role from user."
-)
-class RemoveRolesAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        """
-        Remove multiple roles from a user.
-        """
-        serializer = UserRoleSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user_id = serializer.validated_data["user_id"]
-        role_ids = serializer.validated_data["role_ids"]
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        roles = Role.objects.filter(id__in=role_ids)
-        user.roles.remove(*roles)
-        return Response({"detail": f"{roles.count()} role(s) removed from user {user.email}"}, status=status.HTTP_200_OK)
