@@ -1,5 +1,8 @@
 from datetime import timedelta
 from pathlib import Path
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,7 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    'cloudinary',
+    'cloudinary_storage',
     'rest_framework',
     'drf_spectacular',
     'rest_framework_simplejwt.token_blacklist',
@@ -38,6 +42,11 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    
+'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+
 }
 
 MIDDLEWARE = [
@@ -171,8 +180,8 @@ SPECTACULAR_SETTINGS = {
         "- Student career orientation & skills assessment\n"
         "- Career guidance & pathway recommendations\n"
         "- University and program matching based on student profiles\n"
-        "- Access to resources for informed decision-making\n\n"
-        "- to access it virtually we gonna use tunnels\n"
+        "- Access to resources for informed decision-making\n"
+        "- to access it virtually we gonna use tunnels\n\n"
         "This documentation provides details on available endpoints, request/response formats, "
         "and usage guidelines for developers and integrators."
         
@@ -181,8 +190,8 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'CONTACT': {
         'name': 'Career Compass Team',
-        'email': 'support@careercompass.org',
-        'url': 'https://careercompass.org',
+        'email': 'niyokwizerajd123@gmail.com',
+        'url': 'https://brojeid.netlify.app',
     },
     'LICENSE': {
         'name': 'MIT License',
@@ -197,3 +206,19 @@ SPECTACULAR_SETTINGS = {
 AUTH_USER_MODEL = 'accounts.User'
 
 ALLOWED_HOSTS=['*']
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dhd6hhdxd',
+    'API_KEY': '625699523429623',
+    'API_SECRET': 'NaYDjWmyNQl1ayw7QSQhmgueynI',
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER="masezeranoesther20@gmail.com"
+EMAIL_HOST_PASSWORD="qccjqkjusztgyhjg"
+DEFAULT_FROM_EMAIL="masezeranoesther20@gmail.com"

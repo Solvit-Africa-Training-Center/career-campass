@@ -1,6 +1,10 @@
+from datetime import timedelta
+import random
+from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.conf import settings
+from cloudinary_storage.storage import MediaCloudinaryStorage
 
 
 class Role(models.Model):
@@ -50,6 +54,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     password = models.CharField(max_length=128)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    otp_created_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     # Many-to-Many relationship
@@ -62,6 +69,22 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    def generate_otp(self):
+        otp = str(random.randint(100000, 999999))
+        self.otp = otp
+        self.otp_created_at = timezone.now()
+        self.save()
+        return otp
+
+    def is_otp_valid(self, otp):
+        """Check if the OTP is correct and not expired (10 minutes)."""
+        if self.otp != otp:
+            return False
+        if not self.otp_created_at:
+            return False
+        expiration_time = self.otp_created_at + timedelta(minutes=10)
+        return timezone.now() <= expiration_time
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -72,7 +95,7 @@ class Profile(models.Model):
     country = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50, null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
-    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)  # configure the media settings
+    avatar = models.ImageField(upload_to="career/avatars/",storage=MediaCloudinaryStorage(), null=True, blank=True)  # configure the media settings
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
