@@ -87,20 +87,7 @@ class ProgramIntake(models.Model):
         return f"{self.program.name} - {self.start_month}"
 
 
-class ProgramFee(models.Model):
-    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='fees')
-    tuition_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    tuition_currency = models.CharField(max_length=3)
-    application_fee_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    has_scholarship = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
 
-    objects = SoftDeleteManager()   # default → only active
-    all_objects = models.Manager()  # optional → to also query deleted
-
-    def __str__(self):
-        return f"{self.program.name} - {self.start_month}"
 
 
 class ProgramFee(models.Model):
