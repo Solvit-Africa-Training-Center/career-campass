@@ -12,3 +12,6 @@ sqlite.db
 */migrations/*
 !*/migrations/__init__.py
 /.pytest_cache/
+uv.lock
+.python-version
+pyproject.toml

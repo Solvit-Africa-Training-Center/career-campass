@@ -12,8 +12,10 @@ class SoftDeleteManager(models.Manager):
         return SoftDeleteQuerySet(self.model, using=self._db).active()
 
 
+import uuid
+
 class Institution(models.Model):
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     official_name = models.CharField(max_length=255)
     aka = models.CharField(max_length=255, blank=True, null=True)
     type = models.CharField(max_length=100)
@@ -58,6 +60,7 @@ class Campus(models.Model):
 
 
 class Program(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name='programs')
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -73,6 +76,7 @@ class Program(models.Model):
 
 
 class ProgramIntake(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='intakes')
     start_month = models.CharField(max_length=20)
     application_deadline = models.DateField()

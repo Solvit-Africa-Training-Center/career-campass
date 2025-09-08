@@ -8,6 +8,7 @@ class CatalogError(Exception):
 class CatalogNotFound(CatalogError):
     """Program (or route) not found in catalog"""
     pass
+
 def _client() -> httpx.Client:
     """
     A short-lived client per call. for high-throughput, you could promote a module-level, but this keeps it simple and safe
@@ -25,7 +26,7 @@ def get_program_required_documents(program_id: str) -> list[dict]:
     404 -> program not found (we surface CatalogNotFound)
     Other 4xx/5xx -> CatalogError
     """
-    url = f"{settings.CATALOG_BASE_URLS}/programs/{program_id}/required-documents"
+    url = f"{settings.CATALOG_BASE_URL}/programs/{program_id}/required-documents"
     with _client() as c:
         r = c.get(url)
     if r.status_code == 404:
@@ -39,10 +40,10 @@ def resolve_student_required_documents(student_id: str) -> list[dict]:
     """
     Ask Catalog for student-level baseline requirements (if any).
     Expected 200 JSON shape same as above.
-    If resolver returns 404, treat it as “no extra rules” (return []).
+    If resolver returns 404, treat it as "no extra rules" (return []).
     Other errors -> CatalogError (caller can decide to ignore).
     """
-    url = f"{settings.CATALOG_BASE_URLS}/student-required-documents:resolve"
+    url = f"{settings.CATALOG_BASE_URL}/student-required-documents:resolve"
     with _client() as c:
         r = c.get(url, params={"student_id": student_id})
     if r.status_code == 404:

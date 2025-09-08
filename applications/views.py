@@ -1,10 +1,17 @@
 
+import logging
+from typing import Optional
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
+from core.utils.uuid_helpers import parse_uuid, is_valid_uuid
+from core.utils.view_decorators import validate_uuid_params
+from core.mixins.uuid_viewset import UUIDViewSetMixin
+
+logger = logging.getLogger(__name__)
 from .models import (
     Application, ApplicationsEvent, ApplicationRequiredDocument, ApplicationDocument, Status
 )
@@ -18,17 +25,44 @@ from .integrations.catalog import (
 from .integrations.documents import get_student_document, DocumentsError, StudentDocumentNotFound
 from .services.snapshot import merge_required_docs
 
-def current_user_id(request) -> str:
+def current_user_id(request) -> Optional[str]:
     """
-    TEMP: get user from header to keep moving.
-    Later, replace with your real auth (e.g., request.user or JWT).
+    Get authenticated user ID from the JWT token.
+    
+    This function extracts the user ID from the authenticated user object
+    and ensures it's a valid UUID.
+    
+    Args:
+        request: The HTTP request object with authenticated user
+        
+    Returns:
+        Optional[str]: The user ID as a string or None if not authenticated 
+                      or if the ID is not a valid UUID
     """
-    return request.headers.get("X-User-Id", "00000000-0000-0000-0000-000000000001")
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return None
+    
+    # Ensure we return a properly formatted UUID string
+    try:
+        user_id = parse_uuid(request.user.id)
+        if user_id is None:
+            logger.warning(f"Authenticated user has invalid UUID: {request.user.id}")
+            return None
+        
+        return str(user_id)
+    except Exception as e:
+        logger.error(f"Error parsing user ID: {str(e)}")
+        return None
 
 
-class ApplicationViewSet(viewsets.ViewSet):
+class ApplicationViewSet(UUIDViewSetMixin, viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+    
     def list(self, request):
         student_id = current_user_id(request)
+        if not student_id:
+            return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
         qs = Application.objects.filter(student_id=student_id).order_by("-created_at")[:50]
         return Response([{"id": str(a.id), "status": a.status} for a in qs])
 
@@ -39,11 +73,21 @@ class ApplicationViewSet(viewsets.ViewSet):
         If any step fails (e.g., unknown program), we roll the DB back to clean state.
         """
         student_id = current_user_id(request)
+        if not student_id:
+            return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
         ser = ApplicationCreateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
 
+        # Validate UUIDs from the serializer
         program_id = str(ser.validated_data["program_id"])
         intake_id = str(ser.validated_data["intake_id"])
+        
+        # Double-check UUID validity
+        if not is_valid_uuid(program_id) or not is_valid_uuid(intake_id):
+            return Response(
+                {"detail": "Invalid UUID format for program_id or intake_id"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # 1) Create Draft application row
         app = Application.objects.create(
@@ -95,6 +139,7 @@ class ApplicationViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["post"], url_path="documents")
     @transaction.atomic
+    @validate_uuid_params('pk')
     def attach_document(self, request, pk=None):
         """
         Attach a student's uploaded document to this application under a specific doc_type_id.
@@ -106,6 +151,8 @@ class ApplicationViewSet(viewsets.ViewSet):
         - doc_type match between payload and student_document
         """
         student_id = current_user_id(request)
+        if not student_id:
+            return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
         app = get_object_or_404(Application, pk=pk)
 
         if str(app.student_id) != str(student_id):

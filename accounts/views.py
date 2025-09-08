@@ -32,9 +32,34 @@ class RoleViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
 @extend_schema(
     tags=["Authentication"],
     request=RegisterRequestSerializer,
-    description="Register a new user and send OTP for email verification."
+    description="Register a new user and send OTP for email verification.",
+    responses={
+        201: {
+            "description": "User created successfully",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "User registered. Please verify your email with the OTP sent."}
+                }
+            }
+        },
+        400: {
+            "description": "Bad request - validation errors",
+            "content": {
+                "application/json": {
+                    "example": {"email": ["This field is required."]}
+                }
+            }
+        }
+    }
 )
 class RegisterAPIView(generics.CreateAPIView):
+    """
+    Register a new user account.
+    
+    Creates a new user with the provided email and password.
+    The account is created but requires email verification via OTP.
+    An OTP code is generated and sent to the provided email.
+    """
     queryset = User.objects.all()
     serializer_class = RegisterRequestSerializer
     permission_classes = [AllowAny]
@@ -46,6 +71,11 @@ class RegisterAPIView(generics.CreateAPIView):
         otp = user.generate_otp()
         # Send OTP via email
         send_otp_via_email(user.email, otp)
+        
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        response.data = {"detail": "User registered. Please verify your email with the OTP sent."}
+        return response
 
 @extend_schema(
     tags=["Authentication"],
@@ -107,28 +137,28 @@ class ResendOTPAPIView(APIView):
 class UserViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "put", "delete"]
 
 @extend_schema(tags=["Profiles"], description="Retrieve, create, update or soft-delete profiles.")
 class ProfileViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Profile.objects.filter(is_active=True)
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
 
 @extend_schema(tags=["Students"], description="Retrieve, create, update or soft-delete students.")
 class StudentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Student.objects.filter(is_active=True)
     serializer_class = StudentSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
 
 @extend_schema(tags=["Agents"], description="Retrieve, create, update or soft-delete agents.")
 class AgentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Agent.objects.filter(is_active=True)
     serializer_class = AgentSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
 
 
@@ -250,7 +280,7 @@ class CustomTokenRefreshView(TokenRefreshView):
     description="Assign role to user."
 )
 class AssignRolesAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         """
@@ -280,7 +310,7 @@ class AssignRolesAPIView(APIView):
     description="Remove role from user."
 )
 class RemoveRolesAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         """

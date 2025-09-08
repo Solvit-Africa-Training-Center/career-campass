@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from core.mixins.uuid_serializer import UUIDSerializerMixin
+from core.utils.uuid_helpers import is_valid_uuid
 from .models import *
 
 class BaseSoftDeleteSerializer(serializers.ModelSerializer):
@@ -23,10 +25,17 @@ class BaseSoftDeleteSerializer(serializers.ModelSerializer):
             return [super().to_representation(obj) for obj in instance]
         return super().to_representation(instance)
 
-class InstitutionSerializer(BaseSoftDeleteSerializer):
+class InstitutionSerializer(UUIDSerializerMixin, BaseSoftDeleteSerializer):
+    id = serializers.UUIDField(format='hex', read_only=True)
+    
     class Meta:
         model = Institution
         fields = "__all__"
+        
+    @classmethod
+    def setup_eager_loading(cls, queryset):
+        """Optimize loading when including related campuses"""
+        return queryset.prefetch_related('campuses')
 
 
 class InstitutionStaffSerializer(BaseSoftDeleteSerializer):
@@ -41,16 +50,32 @@ class CampusSerializer(BaseSoftDeleteSerializer):
         fields = "__all__"
 
 
-class ProgramSerializer(BaseSoftDeleteSerializer):
+class ProgramSerializer(UUIDSerializerMixin, BaseSoftDeleteSerializer):
+    id = serializers.UUIDField(format='hex', read_only=True)
+    institution_id = serializers.UUIDField(format='hex')
+    
     class Meta:
         model = Program
         fields = "__all__"
+        
+    @classmethod
+    def setup_eager_loading(cls, queryset):
+        """Optimize loading when including related institution"""
+        return queryset.select_related('institution').prefetch_related('intakes', 'fees')
 
 
-class ProgramIntakeSerializer(BaseSoftDeleteSerializer):
+class ProgramIntakeSerializer(UUIDSerializerMixin, BaseSoftDeleteSerializer):
+    id = serializers.UUIDField(format='hex', read_only=True)
+    program_id = serializers.UUIDField(format='hex')
+    
     class Meta:
         model = ProgramIntake
         fields = "__all__"
+        
+    @classmethod
+    def setup_eager_loading(cls, queryset):
+        """Optimize loading when including related program"""
+        return queryset.select_related('program')
 
 
 class ProgramFeeSerializer(BaseSoftDeleteSerializer):

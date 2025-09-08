@@ -5,11 +5,16 @@ from rest_framework.exceptions import MethodNotAllowed
 from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from .models import Campus, Institution, InstitutionStaff, Program, ProgramIntake, ProgramFee, ProgramFeature, AdmissionRequirement
+from core.utils.uuid_helpers import is_valid_uuid
+from core.utils.view_decorators import validate_uuid_params
 
-class SoftDeleteModelViewSet(viewsets.ModelViewSet):
+from core.mixins.uuid_viewset import UUIDViewSetMixin
+
+class SoftDeleteModelViewSet(UUIDViewSetMixin, viewsets.ModelViewSet):
     """
     Base ViewSet:
     - Enforces soft delete via SoftDeleteMixin
+    - Validates UUIDs via UUIDViewSetMixin
     - Excludes PATCH (partial_update)
     """
 
@@ -21,6 +26,9 @@ class SoftDeleteModelViewSet(viewsets.ModelViewSet):
         Perform soft delete by setting is_active=False instead of removing the object.
         """
         instance = self.get_object()
+        if hasattr(self, 'validation_error') and self.validation_error:
+            return Response({"detail": "Invalid UUID format"}, status=status.HTTP_400_BAD_REQUEST)
+            
         instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)

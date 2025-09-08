@@ -121,6 +121,7 @@ class Agent(models.Model):
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
-
     
-
+    def __str__(self):
+        return f"Agent: {self.user.email}"
+    

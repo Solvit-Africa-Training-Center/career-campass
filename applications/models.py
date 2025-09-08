@@ -15,20 +15,66 @@ class Status(models.TextChoices):
     
 class Application(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    student_id = models.UUIDField()
-    program_id = models.UUIDField()
-    intake_id = models.UUIDField()
-    status = models.CharField(max_length=32, choices=Status.choices, default=Status.DRAFT)
+    student_id = models.UUIDField(
+        help_text="UUID reference to a student in the accounts service",
+        db_index=True
+    )
+    program_id = models.UUIDField(
+        help_text="UUID reference to a program in the catalog service",
+        db_index=True
+    )
+    intake_id = models.UUIDField(
+        help_text="UUID reference to a program intake in the catalog service",
+        db_index=True
+    )
+    status = models.CharField(
+        max_length=32, 
+        choices=Status.choices, 
+        default=Status.DRAFT,
+        db_index=True
+    )
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         indexes = [
             models.Index(fields=["student_id"]),
-            models.Index(fields = ["program_id"]),
+            models.Index(fields=["program_id"]),
             models.Index(fields=["status"]),
+            # Compound indexes for common query patterns
+            models.Index(fields=["student_id", "status"]),
+            models.Index(fields=["program_id", "status"]),
         ]
         ordering = ["-created_at"]
+        
+    def __str__(self):
+        return f"Application {self.id} - Status: {self.status}"
+        
+    @property
+    def is_draft(self):
+        """Check if application is in draft status"""
+        return self.status == Status.DRAFT
+        
+    @property
+    def is_submitted(self):
+        """Check if application has been submitted"""
+        return self.status == Status.SUBMITTED
+        
+    @property
+    def is_under_review(self):
+        """Check if application is under review"""
+        return self.status == Status.UNDER_REVIEW
+        
+    @property
+    def is_completed(self):
+        """Check if application has reached a terminal state"""
+        return self.status in [
+            Status.OFFER, 
+            Status.CONDITIONAL_OFFER,
+            Status.REJECTED,
+            Status.ACCEPTED,
+            Status.WITHDRAWN
+        ]
 
 class ApplicationRequiredDocument(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

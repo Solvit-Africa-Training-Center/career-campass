@@ -4,18 +4,21 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'unsafe-default-key')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY environment variable is not set")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1')
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1')
 
 # Set allowed hosts from environment or default to localhost
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
@@ -211,7 +214,7 @@ SPECTACULAR_SETTINGS = {
 
 AUTH_USER_MODEL = 'accounts.User'
 
-ALLOWED_HOSTS=['*']
+# ALLOWED_HOSTS is already set above
 
 
 CLOUDINARY_STORAGE = {
