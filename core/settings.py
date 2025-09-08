@@ -227,5 +227,6 @@ EMAIL_HOST_PASSWORD="qccjqkjusztgyhjg"
 DEFAULT_FROM_EMAIL="masezeranoesther20@gmail.com"
 
 CATALOG_BASE_URL = os.getenv("CATALOG_BASE_URL", "http://127.0.0.1:8000/api/catalog")
+DOCUMENTS_BASE_URL = os.getenv("DOCUMENTS_BASE_URL", "http://127.0.0.1:8000/documents")
 # Defensive timeout for HTTP calls so our request doesn't hang forever.
 HTTP_CLIENT_TIMEOUT = float(os.getenv("HTTP_CLIENT_TIMEOUT", "6.0"))
