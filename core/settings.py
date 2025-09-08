@@ -3,6 +3,7 @@ from pathlib import Path
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import os
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -224,3 +225,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER="masezeranoesther20@gmail.com"
 EMAIL_HOST_PASSWORD="qccjqkjusztgyhjg"
 DEFAULT_FROM_EMAIL="masezeranoesther20@gmail.com"
+
+DOCUMENTS_BASE_URL = os.getenv("DOMENTS_BASE_URL", "HTTP://127.0.0.1:8000/documents")
+HTTP_CLIENT_TIMEOUT = float(os.getenv("HTTP_CLIENT_TIMEOUT", "6.0"))
+
