@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+
 from .models import (
-    Application, ApplicationEvent, ApplicationRequiredDocument, ApplicationDocument, Status
+    Application, ApplicationsEvent, ApplicationRequiredDocument, ApplicationDocument, Status
 )
 from .serializers import ApplicationCreateSerializer, ApplicationSerializer
 from .serializers_attach import AttachDocumentIn
@@ -17,18 +18,6 @@ from .integrations.catalog import (
 from .integrations.documents import get_student_document, DocumentsError, StudentDocumentNotFound
 from .services.snapshot import merge_required_docs
 
-from .models import (
-    Application, ApplicationsEvent, ApplicationRequiredDocument, Status
-)
-from .serializers import ApplicationCreateSerializer, ApplicationSerializer
-from .integrations.catalog import (
-    get_program_required_documents,
-    resolve_student_required_documents,
-    CatalogNotFound, CatalogError,
-)
-from .services.snapshot import merge_required_docs
-
-
 def current_user_id(request) -> str:
     """
     TEMP: get user from header to keep moving.
@@ -37,7 +26,7 @@ def current_user_id(request) -> str:
     return request.headers.get("X-User-Id", "00000000-0000-0000-0000-000000000001")
 
 
-
+class ApplicationViewSet(viewsets.ViewSet):
     def list(self, request):
         student_id = current_user_id(request)
         qs = Application.objects.filter(student_id=student_id).order_by("-created_at")[:50]
@@ -94,11 +83,11 @@ def current_user_id(request) -> str:
         if rows:
             ApplicationRequiredDocument.objects.bulk_create(rows, ignore_conflicts=True)
 
-        ApplicationEvent.objects.create(
+        ApplicationsEvent.objects.create(
             application=app,
             actor_id=student_id,
             event_type="created",
-            to_status=Status.DRAFT,
+            from_status=None,  # No previous status as this is a new application
             note=f"Snapshot {len(rows)} required document(s).",
         )
 
@@ -156,7 +145,7 @@ def current_user_id(request) -> str:
             student_document_id=student_document_id,
         )
 
-        ApplicationEvent.objects.create(
+        ApplicationsEvent.objects.create(
             application=app,
             actor_id=student_id,
             event_type="doc_attached",

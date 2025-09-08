@@ -10,12 +10,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
-SECRET_KEY = 'django-insecure--bk97&-45q(z-qnl-5gpntpszn(e+u0awm104edtl!p-4q1km^'
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'unsafe-default-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1')
 
-ALLOWED_HOSTS = []
+# Set allowed hosts from environment or default to localhost
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -210,21 +213,23 @@ AUTH_USER_MODEL = 'accounts.User'
 
 ALLOWED_HOSTS=['*']
 
+
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dhd6hhdxd',
-    'API_KEY': '625699523429623',
-    'API_SECRET': 'NaYDjWmyNQl1ayw7QSQhmgueynI',
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY', ''),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', ''),
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER="masezeranoesther20@gmail.com"
-EMAIL_HOST_PASSWORD="qccjqkjusztgyhjg"
-DEFAULT_FROM_EMAIL="masezeranoesther20@gmail.com"
+
+EMAIL_BACKEND = os.getenv("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("DJANGO_EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("DJANGO_EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("DJANGO_EMAIL_USE_TLS", "True").lower() in ("true", "1")
+EMAIL_HOST_USER = os.getenv("DJANGO_EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("DJANGO_EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DJANGO_DEFAULT_FROM_EMAIL", "")
 
 CATALOG_BASE_URL = os.getenv("CATALOG_BASE_URL", "http://127.0.0.1:8000/api/catalog")
 DOCUMENTS_BASE_URL = os.getenv("DOCUMENTS_BASE_URL", "http://127.0.0.1:8000/documents")

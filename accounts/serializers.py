@@ -118,11 +118,11 @@ class RegisterRequestSerializer(serializers.ModelSerializer):
         return user    
     
 class UserRoleSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
+    user_id = serializers.IntegerField()  # Changed from UUIDField to IntegerField
     role_ids = serializers.ListField(
-        child=serializers.IntegerField(), 
+        child=serializers.IntegerField(),  # Changed from UUIDField to IntegerField
         help_text="List of role IDs to assign or remove"
-    )    
+    )
 
 
 

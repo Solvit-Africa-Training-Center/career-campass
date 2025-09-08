@@ -1,6 +1,6 @@
-from typing import Iterable, Dict
+from typing import Iterable, Dict, List, TypedDict
 
-def merge_required_docs(program_reqs: Iterable[Dict], student_reqs: Iterable[Dict]) -> list[Dict]:
+def merge_required_docs(program_reqs: Iterable[Dict], student_reqs: Iterable[Dict]) -> List[Dict]:
     """
     Union by doc_type_id. When both sides specify the same doc_type_id:
       - is_mandatory: OR (if either requires it, it's required)
@@ -10,7 +10,7 @@ def merge_required_docs(program_reqs: Iterable[Dict], student_reqs: Iterable[Dic
     Return each item as:
       { "doc_type_id": "<uuid>", "is_mandatory": bool, "min_items": int, "max_items": int, "source": "program|student" }
     """
-    by_id = dict[str, Dict] = {}
+    by_id: Dict[str, Dict] = {}
     
     def upsert(items: Iterable[Dict], source: str):
         for it in items:

@@ -16,15 +16,6 @@ class BaseSoftDeleteSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    def delete(self):
-        """Soft delete instead of hard delete."""
-        instance = self.instance
-        if hasattr(instance, "is_active"):
-            instance.is_active = False
-            instance.save(update_fields=["is_active"])
-        else:
-            instance.delete()
-        return instance
 
     def to_representation(self, instance):
         """Handles both single objects and lists."""

@@ -4,7 +4,7 @@ from django.utils import timezone
 
 class Status(models.TextChoices):
     DRAFT = "Draft", "Draft"
-    SUBMITTED  = "Sbmitted", "Submitted"
+    SUBMITTED  = "Submitted", "Submitted"
     UNDER_REVIEW = "UnderReview", "Under Review"
     OFFER = "Offer", "Offer"
     CONDITIONAL_OFFER = "ConditionalOffer", "Conditional Offer"

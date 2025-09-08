@@ -5,7 +5,7 @@ class ApplicationCreateSerializer(serializers.Serializer):
     program_id = serializers.UUIDField()
     intake_id = serializers.UUIDField()
 
-class ApplicationSerializer(serializers.Serializer):
+class ApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = ("id", "status")
