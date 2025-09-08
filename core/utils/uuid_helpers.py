@@ -96,24 +96,3 @@ def format_uuid_for_display(val: Union[uuid.UUID, str], chars: int = 8) -> str:
         return uuid_str
         
     return f"{uuid_str[:chars]}..."
-
-def generate_uuid() -> uuid.UUID:
-    """
-    Generate a new random UUID.
-    
-    Returns:
-        uuid.UUID: A new UUID object
-    """
-    return uuid.uuid4()
-
-def validate_uuid_list(uuid_list: list) -> list:
-    """
-    Validate a list of UUIDs and return only the valid ones.
-    
-    Args:
-        uuid_list: List of UUID strings or objects
-        
-    Returns:
-        list: List of valid UUID objects
-    """
-    return [parse_uuid(val) for val in uuid_list if is_valid_uuid(val)]
