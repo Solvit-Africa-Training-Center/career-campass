@@ -51,12 +51,42 @@ jobs:
     - name: Run Django Migrations
       run: |
         # Run migrations to set up the database for tests
-        python manage.py migrate
+        echo "Running migrations with explicit settings module..."
+        DJANGO_SETTINGS_MODULE=core.settings python manage.py migrate --no-input
+        echo "Listing all tables in the database to verify migration success..."
+        DJANGO_SETTINGS_MODULE=core.settings python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+import django
+django.setup()
+from django.db import connection
+cursor = connection.cursor()
+cursor.execute('SELECT name FROM sqlite_master WHERE type=\"table\";')
+tables = cursor.fetchall()
+print('Tables in database:')
+for table in tables:
+    print(f'- {table[0]}')
+"
 
     - name: Run Tests
       run: |
+        # Verify environment before running tests
+        echo "Python version:"
+        python --version
+        echo "Django version:"
+        python -c "import django; print(django.get_version())"
+        echo "Database configuration:"
+        DJANGO_SETTINGS_MODULE=core.settings python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+import django
+django.setup()
+from django.conf import settings
+print(f'DATABASE ENGINE: {settings.DATABASES[\"default\"][\"ENGINE\"]}')
+print(f'DATABASE NAME: {settings.DATABASES[\"default\"][\"NAME\"]}')
+"
         # Run pytest with Django settings module configured
-        DJANGO_SETTINGS_MODULE=core.settings python -m pytest
+        DJANGO_SETTINGS_MODULE=core.settings python -m pytest -v
 
   deploy:
     needs: test
