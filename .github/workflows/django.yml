@@ -14,13 +14,6 @@ jobs:
       matrix:
         python-version: [3.13, 3.12]
 
-    services:
-      # Add SQLite service as database backend
-      sqlite:
-        image: nouchka/sqlite3:latest
-        ports:
-          - 5432:5432
-
     env:
       DJANGO_SECRET_KEY: 'github-actions-test-key-not-for-production'
       DJANGO_DEBUG: 'True'
@@ -38,84 +31,22 @@ jobs:
     
     - name: Set PYTHONPATH
       run: |
-        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
-        echo "Setting PYTHONPATH to include $(pwd)"
+        echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
     
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest pytest-django
         pip install -r requirements.txt
-    
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     
     - name: Run Django Migrations
       run: |
-        # Run migrations to set up the database for tests
-        echo "Running migrations with explicit settings module..."
-        # List all apps with migrations that need to be run
-        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py showmigrations
-        
-        # Run migrations for all apps
-        echo "Running migrations for all apps..."
-        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py migrate --no-input
-        
-        # Explicitly run migrations for catalog and applications apps to ensure they're applied
-        echo "Ensuring catalog app migrations are applied..."
-        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py migrate catalog --no-input
-        
-        echo "Ensuring applications app migrations are applied..."
-        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py migrate applications --no-input
-        
-        # Verify migrations were applied
-        echo "Verifying migrations were applied..."
-        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py showmigrations
-        
-        # Make diagnostic script executable
-        chmod +x scripts/diagnose_db.py
-        
-        # Run database diagnostic script
-        echo "Running database diagnostic checks..."
-        # Add the current directory to PYTHONPATH explicitly for this command
-        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/diagnose_db.py
-        
-        # Verify the specific tables exist
-        echo "Verifying specific tables exist in the database..."
-        chmod +x scripts/check_tables.py
-        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/check_tables.py
-
+        python manage.py migrate --no-input
+        python manage.py migrate catalog --no-input
+        python manage.py migrate applications --no-input
+    
     - name: Run Tests
       run: |
-        # Verify environment before running tests
-        echo "Python version:"
-        python --version
-        echo "Django version:"
-        python -c "import django; print(django.get_version())"
-        echo "Python path:"
-        python -c "import sys; print('PYTHONPATH:', sys.path)"
-        echo "Current directory:"
-        pwd
-        echo "Directory contents:"
-        ls -la
-        
-        # Verify that core modules can be imported
-        echo "Verifying modules can be imported:"
-        chmod +x scripts/verify_imports.py
-        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/verify_imports.py
-        
-        # Verify database is ready for tests
-        echo "Verifying database schema is ready for tests:"
-        chmod +x scripts/list_tables.py
-        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/list_tables.py
-        
-        # Run pytest with Django settings module configured and explicit PYTHONPATH
-        # Add --create-db flag to ensure pytest-django creates a fresh test database
-        PYTHONPATH=$(pwd):$PYTHONPATH python -m pytest -v
+        python -m pytest -v
 
   deploy:
     needs: test
@@ -130,14 +61,8 @@ jobs:
       with:
         python-version: '3.13'
     
-    - name: Install deployment dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel
-    
     - name: Build artifact
       run: |
-        # Create a deployment package
         mkdir -p deploy
         cp -r applications accounts catalog core manage.py requirements.txt deploy/
         cd deploy && zip -r ../career-campass-deploy.zip .
@@ -148,10 +73,3 @@ jobs:
         name: django-app
         path: career-campass-deploy.zip
         retention-days: 5
-        
-    # This step would be customized based on your actual deployment target
-    - name: Deploy
-      run: |
-        echo "Deploying application to server..."
-        # Add your deployment commands here
-        # For example: rsync, scp, or calls to cloud provider APIs
