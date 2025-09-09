@@ -25,6 +25,7 @@ jobs:
       DJANGO_SECRET_KEY: 'github-actions-test-key-not-for-production'
       DJANGO_DEBUG: 'True'
       DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1'
+      DJANGO_SETTINGS_MODULE: 'core.settings'
 
     steps:
     - uses: actions/checkout@v4
@@ -34,6 +35,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
+    
+    - name: Set PYTHONPATH
+      run: |
+        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+        echo "Setting PYTHONPATH to include $(pwd)"
     
     - name: Install Dependencies
       run: |
@@ -52,14 +58,14 @@ jobs:
       run: |
         # Run migrations to set up the database for tests
         echo "Running migrations with explicit settings module..."
-        DJANGO_SETTINGS_MODULE=core.settings python manage.py migrate --no-input
+        python manage.py migrate --no-input
         
         # Make diagnostic script executable
         chmod +x scripts/diagnose_db.py
         
         # Run database diagnostic script
         echo "Running database diagnostic checks..."
-        DJANGO_SETTINGS_MODULE=core.settings python scripts/diagnose_db.py
+        python scripts/diagnose_db.py
 
     - name: Run Tests
       run: |
@@ -68,10 +74,17 @@ jobs:
         python --version
         echo "Django version:"
         python -c "import django; print(django.get_version())"
+        echo "Python path:"
+        python -c "import sys; print('PYTHONPATH:', sys.path)"
         echo "Database configuration:"
         python -c "import os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings'); import django; django.setup(); from django.conf import settings; print(f'DATABASE ENGINE: {settings.DATABASES[\"default\"][\"ENGINE\"]}'); print(f'DATABASE NAME: {settings.DATABASES[\"default\"][\"NAME\"]}')"
+        
+        # Try to import the core module to verify it's accessible
+        echo "Verifying core module can be imported:"
+        python -c "import core; print('Successfully imported core module')"
+        
         # Run pytest with Django settings module configured
-        DJANGO_SETTINGS_MODULE=core.settings python -m pytest -v
+        python -m pytest -v
 
   deploy:
     needs: test
