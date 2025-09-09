@@ -53,20 +53,13 @@ jobs:
         # Run migrations to set up the database for tests
         echo "Running migrations with explicit settings module..."
         DJANGO_SETTINGS_MODULE=core.settings python manage.py migrate --no-input
-        echo "Listing all tables in the database to verify migration success..."
-        DJANGO_SETTINGS_MODULE=core.settings python -c "
-import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-import django
-django.setup()
-from django.db import connection
-cursor = connection.cursor()
-cursor.execute('SELECT name FROM sqlite_master WHERE type=\"table\";')
-tables = cursor.fetchall()
-print('Tables in database:')
-for table in tables:
-    print(f'- {table[0]}')
-"
+        
+        # Make diagnostic script executable
+        chmod +x scripts/diagnose_db.py
+        
+        # Run database diagnostic script
+        echo "Running database diagnostic checks..."
+        DJANGO_SETTINGS_MODULE=core.settings python scripts/diagnose_db.py
 
     - name: Run Tests
       run: |
