@@ -69,15 +69,15 @@ jobs:
         echo "Django version:"
         python -c "import django; print(django.get_version())"
         echo "Database configuration:"
-        DJANGO_SETTINGS_MODULE=core.settings python -c "
+        DJANGO_SETTINGS_MODULE=core.settings python -c '
 import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 import django
 django.setup()
 from django.conf import settings
-print(f'DATABASE ENGINE: {settings.DATABASES[\"default\"][\"ENGINE\"]}')
-print(f'DATABASE NAME: {settings.DATABASES[\"default\"][\"NAME\"]}')
-"
+print(f"DATABASE ENGINE: {settings.DATABASES[\"default\"][\"ENGINE\"]}")
+print(f"DATABASE NAME: {settings.DATABASES[\"default\"][\"NAME\"]}")
+'
         # Run pytest with Django settings module configured
         DJANGO_SETTINGS_MODULE=core.settings python -m pytest -v
 
