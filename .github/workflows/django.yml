@@ -58,7 +58,23 @@ jobs:
       run: |
         # Run migrations to set up the database for tests
         echo "Running migrations with explicit settings module..."
-        python manage.py migrate --no-input
+        # List all apps with migrations that need to be run
+        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py showmigrations
+        
+        # Run migrations for all apps
+        echo "Running migrations for all apps..."
+        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py migrate --no-input
+        
+        # Explicitly run migrations for catalog and applications apps to ensure they're applied
+        echo "Ensuring catalog app migrations are applied..."
+        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py migrate catalog --no-input
+        
+        echo "Ensuring applications app migrations are applied..."
+        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py migrate applications --no-input
+        
+        # Verify migrations were applied
+        echo "Verifying migrations were applied..."
+        PYTHONPATH=$(pwd):$PYTHONPATH python manage.py showmigrations
         
         # Make diagnostic script executable
         chmod +x scripts/diagnose_db.py
@@ -67,6 +83,27 @@ jobs:
         echo "Running database diagnostic checks..."
         # Add the current directory to PYTHONPATH explicitly for this command
         PYTHONPATH=$(pwd):$PYTHONPATH python scripts/diagnose_db.py
+        
+        # Verify the specific tables exist
+        echo "Verifying specific tables exist in the database..."
+        PYTHONPATH=$(pwd):$PYTHONPATH python -c "
+import os, sys, django
+sys.path.insert(0, os.getcwd())
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+django.setup()
+from django.db import connection
+cursor = connection.cursor()
+tables_to_check = ['catalog_institution', 'applications_application']
+for table in tables_to_check:
+    cursor.execute(f\"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}';'\")
+    result = cursor.fetchone()
+    if result:
+        print(f'✅ Table {table} exists')
+    else:
+        print(f'❌ Table {table} does NOT exist')
+        sys.exit(1)
+print('All required tables exist!')
+"
 
     - name: Run Tests
       run: |
@@ -86,7 +123,28 @@ jobs:
         echo "Verifying core module can be imported:"
         PYTHONPATH=$(pwd):$PYTHONPATH python -c "import core; print('Successfully imported core module')"
         
+        # Verify catalog and applications can be imported
+        echo "Verifying catalog and applications modules can be imported:"
+        PYTHONPATH=$(pwd):$PYTHONPATH python -c "import catalog; import applications; print('Successfully imported catalog and applications modules')"
+        
+        # Verify database is ready for tests
+        echo "Verifying database schema is ready for tests:"
+        PYTHONPATH=$(pwd):$PYTHONPATH python -c "
+import os, sys, django
+sys.path.insert(0, os.getcwd())
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+django.setup()
+from django.db import connection
+cursor = connection.cursor()
+cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table';\")
+tables = cursor.fetchall()
+print(f'Database contains {len(tables)} tables:')
+for table in tables:
+    print(f'- {table[0]}')
+"
+        
         # Run pytest with Django settings module configured and explicit PYTHONPATH
+        # Add --create-db flag to ensure pytest-django creates a fresh test database
         PYTHONPATH=$(pwd):$PYTHONPATH python -m pytest -v
 
   deploy:
