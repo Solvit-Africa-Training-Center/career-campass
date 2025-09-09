@@ -86,24 +86,8 @@ jobs:
         
         # Verify the specific tables exist
         echo "Verifying specific tables exist in the database..."
-        PYTHONPATH=$(pwd):$PYTHONPATH python -c '
-import os, sys, django
-sys.path.insert(0, os.getcwd())
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-django.setup()
-from django.db import connection
-cursor = connection.cursor()
-tables_to_check = ["catalog_institution", "applications_application"]
-for table in tables_to_check:
-    cursor.execute(f"SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'{table}\';")
-    result = cursor.fetchone()
-    if result:
-        print(f"✅ Table {table} exists")
-    else:
-        print(f"❌ Table {table} does NOT exist")
-        sys.exit(1)
-print("All required tables exist!")
-'
+        chmod +x scripts/check_tables.py
+        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/check_tables.py
 
     - name: Run Tests
       run: |
@@ -119,29 +103,15 @@ print("All required tables exist!")
         echo "Directory contents:"
         ls -la
         
-        # Try to import the core module to verify it's accessible
-        echo "Verifying core module can be imported:"
-        PYTHONPATH=$(pwd):$PYTHONPATH python -c "import core; print('Successfully imported core module')"
-        
-        # Verify catalog and applications can be imported
-        echo "Verifying catalog and applications modules can be imported:"
-        PYTHONPATH=$(pwd):$PYTHONPATH python -c "import catalog; import applications; print('Successfully imported catalog and applications modules')"
+        # Verify that core modules can be imported
+        echo "Verifying modules can be imported:"
+        chmod +x scripts/verify_imports.py
+        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/verify_imports.py
         
         # Verify database is ready for tests
         echo "Verifying database schema is ready for tests:"
-        PYTHONPATH=$(pwd):$PYTHONPATH python -c '
-import os, sys, django
-sys.path.insert(0, os.getcwd())
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-django.setup()
-from django.db import connection
-cursor = connection.cursor()
-cursor.execute("SELECT name FROM sqlite_master WHERE type=\'table\';")
-tables = cursor.fetchall()
-print(f"Database contains {len(tables)} tables:")
-for table in tables:
-    print(f"- {table[0]}")
-'
+        chmod +x scripts/list_tables.py
+        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/list_tables.py
         
         # Run pytest with Django settings module configured and explicit PYTHONPATH
         # Add --create-db flag to ensure pytest-django creates a fresh test database
