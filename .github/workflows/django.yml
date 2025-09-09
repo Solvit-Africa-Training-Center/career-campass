@@ -48,12 +48,13 @@ jobs:
         # exit-zero treats all errors as warnings
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     
+    - name: Run Django Migrations
+      run: |
+        # Run migrations to set up the database for tests
+        python manage.py migrate
+
     - name: Run Tests
       run: |
-        # Create a pytest.ini file with proper configuration
-        echo "[pytest]" > pytest.ini
-        echo "DJANGO_SETTINGS_MODULE = core.settings" >> pytest.ini
-        echo "python_files = test_*.py" >> pytest.ini
         # Run pytest with Django settings module configured
         DJANGO_SETTINGS_MODULE=core.settings python -m pytest
 
