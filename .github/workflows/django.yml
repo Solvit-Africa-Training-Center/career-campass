@@ -86,24 +86,24 @@ jobs:
         
         # Verify the specific tables exist
         echo "Verifying specific tables exist in the database..."
-        PYTHONPATH=$(pwd):$PYTHONPATH python -c "
+        PYTHONPATH=$(pwd):$PYTHONPATH python -c '
 import os, sys, django
 sys.path.insert(0, os.getcwd())
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 from django.db import connection
 cursor = connection.cursor()
-tables_to_check = ['catalog_institution', 'applications_application']
+tables_to_check = ["catalog_institution", "applications_application"]
 for table in tables_to_check:
-    cursor.execute(f\"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}';'\")
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'{table}\';")
     result = cursor.fetchone()
     if result:
-        print(f'✅ Table {table} exists')
+        print(f"✅ Table {table} exists")
     else:
-        print(f'❌ Table {table} does NOT exist')
+        print(f"❌ Table {table} does NOT exist")
         sys.exit(1)
-print('All required tables exist!')
-"
+print("All required tables exist!")
+'
 
     - name: Run Tests
       run: |
@@ -129,19 +129,19 @@ print('All required tables exist!')
         
         # Verify database is ready for tests
         echo "Verifying database schema is ready for tests:"
-        PYTHONPATH=$(pwd):$PYTHONPATH python -c "
+        PYTHONPATH=$(pwd):$PYTHONPATH python -c '
 import os, sys, django
 sys.path.insert(0, os.getcwd())
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 from django.db import connection
 cursor = connection.cursor()
-cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table';\")
+cursor.execute("SELECT name FROM sqlite_master WHERE type=\'table\';")
 tables = cursor.fetchall()
-print(f'Database contains {len(tables)} tables:')
+print(f"Database contains {len(tables)} tables:")
 for table in tables:
-    print(f'- {table[0]}')
-"
+    print(f"- {table[0]}")
+'
         
         # Run pytest with Django settings module configured and explicit PYTHONPATH
         # Add --create-db flag to ensure pytest-django creates a fresh test database
