@@ -9,9 +9,9 @@ sqlite.db
 *.sqlite3
 *.db
 *.log
-# Keep all migration files now
-#*/migrations/*
-#!*/migrations/__init__.py
+# Only keep __init__.py in migrations folders
+*/migrations/*
+!*/migrations/__init__.py
 /.pytest_cache/
 ./uv.lock
 ./.python-version
