@@ -18,10 +18,12 @@ if not SECRET_KEY:
     raise ValueError("DJANGO_SECRET_KEY environment variable is not set")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1')
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1')
 
 # Set allowed hosts from environment or default to localhost
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+if not DEBUG and (not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']):
+    raise ValueError("ALLOWED_HOSTS must be set in production (when DEBUG is False). Set DJANGO_ALLOWED_HOSTS in your environment or .env file.")
 
 
 # Application definition
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'accounts',
     'applications',
     'catalog',
+    'documents',
     
 ]
 
@@ -139,7 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=6),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
@@ -238,3 +241,4 @@ CATALOG_BASE_URL = os.getenv("CATALOG_BASE_URL", "http://127.0.0.1:8000/api/cata
 DOCUMENTS_BASE_URL = os.getenv("DOCUMENTS_BASE_URL", "http://127.0.0.1:8000/documents")
 # Defensive timeout for HTTP calls so our request doesn't hang forever.
 HTTP_CLIENT_TIMEOUT = float(os.getenv("HTTP_CLIENT_TIMEOUT", "6.0"))
+
