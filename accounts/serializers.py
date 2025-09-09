@@ -54,6 +54,13 @@ class StudentSerializer(serializers.ModelSerializer):
             "id", "user", "passport_number", "national_id",
             "current_level", "target_countries", "intended_major", "targeted_fields"
         )
+        
+    def create(self, validated_data):
+        # Assign the current authenticated user to the student
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['user'] = request.user
+        return super().create(validated_data)
 
 
 

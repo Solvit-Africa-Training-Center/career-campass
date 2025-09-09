@@ -113,6 +113,7 @@ class ApplicationsEvent(models.Model):
     actor_id = models.UUIDField()
     event_type = models.CharField(max_length=32)
     from_status = models.CharField(max_length=32, null=True, blank=True)
+    to_status = models.CharField(max_length=32, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(default = timezone.now, editable=False)
     

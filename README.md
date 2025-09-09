@@ -251,6 +251,44 @@ curl -X GET http://localhost:8000/api/catalog/programs/uuid_here/ \
   -H "Authorization: Bearer your_access_token"
 ```
 
+## API Example - Application Submission
+
+### Submit an Application
+
+Submit a draft application after attaching all required documents:
+
+```bash
+curl -X POST http://localhost:8000/api/applications/applications/{application_id}/submit/ \
+  -H "Authorization: Bearer your_access_token"
+```
+
+**Response (Success):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "student_id": "550e8400-e29b-41d4-a716-446655440001",
+  "program_id": "550e8400-e29b-41d4-a716-446655440002",
+  "intake_id": "550e8400-e29b-41d4-a716-446655440003",
+  "status": "Submitted",
+  "created_at": "2025-09-09T14:30:00Z",
+  "updated_at": "2025-09-09T15:45:00Z"
+}
+```
+
+**Error Response (Missing Documents):**
+```json
+{
+  "detail": "Missing required documents",
+  "missing_documents": [
+    {
+      "doc_type_id": "550e8400-e29b-41d4-a716-446655440004",
+      "required": 1,
+      "attached": 0
+    }
+  ]
+}
+```
+
 ## Testing
 
 To run the tests, use the following commands:

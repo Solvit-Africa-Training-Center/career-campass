@@ -1,0 +1,11 @@
+{
+  "user": {
+    "id": 7,
+    "email": "newtest@example.com",
+    "roles": []
+  },
+  "tokens": {
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1NzQ4ODk5NiwiaWF0IjoxNzU3NDAyNTk2LCJqdGkiOiI0YTRhZmJkMzhhM2I0NGI3OWUzOGI0ZWQ4MGIzZGE2MiIsInVzZXJfaWQiOiI3In0.Abp8Xhah72mEy8y2lh2tuL6rH7nPNI69NT9feq9v0jQ",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU3NDAyODk2LCJpYXQiOjE3NTc0MDI1OTYsImp0aSI6IjBmZWZmM2E3MWY1MjQ3ODY5NDQ3YTFlNDc2YWM2MGY4IiwidXNlcl9pZCI6IjcifQ.gLpZr-M1sNmHaWYFl3o-n6_HyD2F"
+  }
+}

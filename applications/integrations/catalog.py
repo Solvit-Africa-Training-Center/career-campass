@@ -49,5 +49,6 @@ def resolve_student_required_documents(student_id: str) -> list[dict]:
     if r.status_code == 404:
         return []
     if r.is_error:
-        raise CatalogError(f"Catalog Error {r.status_code}: {r.text[:200]}")
+        # include status code and small slice of the body for debugging
+        raise CatalogError(f"Catalog error {r.status_code}: {r.text[:200]}")
     return list(r.json())

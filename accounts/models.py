@@ -106,8 +106,8 @@ class Profile(models.Model):
 class Student(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True, help_text="UUID used for cross-service references")
-    passport_number = models.CharField(unique=True, max_length=100, blank=True)
-    national_id = models.CharField(unique=True, max_length=100)
+    passport_number = models.CharField(unique=True, max_length=100, blank=True, null=True)
+    national_id = models.CharField(unique=True, max_length=100, blank=True, null=True)
     current_level = models.CharField(max_length=100, choices=[("high school", "High School"),("undergraduate", "Undergraduate"), ("graduate", "Graduate"), ("phd", "PhD")], blank=True)
     target_countries = models.JSONField(default=list, blank=True)
     intended_major = models.CharField(max_length=100, blank=True)
