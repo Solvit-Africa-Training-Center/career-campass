@@ -9,8 +9,9 @@ sqlite.db
 *.sqlite3
 *.db
 *.log
-*/migrations/*
-!*/migrations/__init__.py
+# Keep all migration files now
+#*/migrations/*
+#!*/migrations/__init__.py
 /.pytest_cache/
 ./uv.lock
 ./.python-version
