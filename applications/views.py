@@ -283,8 +283,6 @@ class ApplicationViewSet(UUIDViewSetMixin, viewsets.ViewSet):
         # Call the transition endpoint directly
         return self.transition(request, pk=pk, transition_data=modified_data)
         
-        return Response(ApplicationSerializer(app).data)
-        
     @action(detail=True, methods=["post"], url_path="documents")
     @transaction.atomic
     @validate_uuid_params('pk')
