@@ -50,7 +50,12 @@ jobs:
     
     - name: Run Tests
       run: |
-        pytest
+        # Create a pytest.ini file with proper configuration
+        echo "[pytest]" > pytest.ini
+        echo "DJANGO_SETTINGS_MODULE = core.settings" >> pytest.ini
+        echo "python_files = test_*.py" >> pytest.ini
+        # Run pytest with Django settings module configured
+        DJANGO_SETTINGS_MODULE=core.settings python -m pytest
 
   deploy:
     needs: test
