@@ -34,3 +34,5 @@ tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 python-dotenv==1.0.1
+httpx==0.28.0
+respx==0.21.0
