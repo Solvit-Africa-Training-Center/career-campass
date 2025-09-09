@@ -37,25 +37,25 @@ jobs:
         cache: 'pip'
     
     - name: Set PYTHONPATH
-      run: |
+      run:
         echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
         echo "Setting PYTHONPATH to include $(pwd)"
     
     - name: Install Dependencies
-      run: |
+      run: 
         python -m pip install --upgrade pip
         pip install flake8 pytest pytest-django
         pip install -r requirements.txt
     
     - name: Lint with flake8
-      run: |
+      run: 
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     
     - name: Run Django Migrations
-      run: |
+      run: 
         # Run migrations to set up the database for tests
         echo "Running migrations with explicit settings module..."
         python manage.py migrate --no-input
@@ -68,7 +68,7 @@ jobs:
         python scripts/diagnose_db.py
 
     - name: Run Tests
-      run: |
+      run: 
         # Verify environment before running tests
         echo "Python version:"
         python --version
@@ -100,12 +100,12 @@ jobs:
         python-version: '3.13'
     
     - name: Install deployment dependencies
-      run: |
+      run: 
         python -m pip install --upgrade pip
         pip install setuptools wheel
     
     - name: Build artifact
-      run: |
+      run: 
         # Create a deployment package
         mkdir -p deploy
         cp -r applications accounts catalog core manage.py requirements.txt deploy/
@@ -120,7 +120,7 @@ jobs:
         
     # This step would be customized based on your actual deployment target
     - name: Deploy
-      run: |
+      run:
         echo "Deploying application to server..."
         # Add your deployment commands here
         # For example: rsync, scp, or calls to cloud provider APIs
