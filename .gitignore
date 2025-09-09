@@ -15,3 +15,12 @@ sqlite.db
 uv.lock
 .python-version
 pyproject.toml
+
+# Auth and token files (sensitive)
+access_token.txt
+login_response.json
+login_tokens.json
+token.json
+
+# Development scripts
+setup_and_test.sh
