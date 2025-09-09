@@ -5,11 +5,32 @@ This script verifies the database setup and migration state.
 """
 import os
 import sys
+
+# Add the parent directory to the Python path to ensure imports work
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+print(f"Added to Python path: {parent_dir}")
+print(f"Current sys.path: {sys.path}")
+
 import django
 
 # Set up Django environment
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-django.setup()
+try:
+    django.setup()
+    print("Django setup successful")
+except Exception as e:
+    print(f"Django setup failed: {e}")
+    # Try to diagnose the import issue
+    try:
+        import core
+        print("Core module can be imported")
+    except ImportError as e:
+        print(f"Cannot import core module: {e}")
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Directory contents: {os.listdir()}")
+        sys.exit(1)
 
 from django.db import connection
 from django.conf import settings

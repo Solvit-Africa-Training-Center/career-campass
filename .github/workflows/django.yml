@@ -37,25 +37,25 @@ jobs:
         cache: 'pip'
     
     - name: Set PYTHONPATH
-      run:
+      run: |
         echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
         echo "Setting PYTHONPATH to include $(pwd)"
     
     - name: Install Dependencies
-      run: 
+      run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest pytest-django
         pip install -r requirements.txt
     
     - name: Lint with flake8
-      run: 
+      run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     
     - name: Run Django Migrations
-      run: 
+      run: |
         # Run migrations to set up the database for tests
         echo "Running migrations with explicit settings module..."
         python manage.py migrate --no-input
@@ -65,10 +65,11 @@ jobs:
         
         # Run database diagnostic script
         echo "Running database diagnostic checks..."
-        python scripts/diagnose_db.py
+        # Add the current directory to PYTHONPATH explicitly for this command
+        PYTHONPATH=$(pwd):$PYTHONPATH python scripts/diagnose_db.py
 
     - name: Run Tests
-      run: 
+      run: |
         # Verify environment before running tests
         echo "Python version:"
         python --version
@@ -76,15 +77,17 @@ jobs:
         python -c "import django; print(django.get_version())"
         echo "Python path:"
         python -c "import sys; print('PYTHONPATH:', sys.path)"
-        echo "Database configuration:"
-        python -c "import os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings'); import django; django.setup(); from django.conf import settings; print(f'DATABASE ENGINE: {settings.DATABASES[\"default\"][\"ENGINE\"]}'); print(f'DATABASE NAME: {settings.DATABASES[\"default\"][\"NAME\"]}')"
+        echo "Current directory:"
+        pwd
+        echo "Directory contents:"
+        ls -la
         
         # Try to import the core module to verify it's accessible
         echo "Verifying core module can be imported:"
-        python -c "import core; print('Successfully imported core module')"
+        PYTHONPATH=$(pwd):$PYTHONPATH python -c "import core; print('Successfully imported core module')"
         
-        # Run pytest with Django settings module configured
-        python -m pytest -v
+        # Run pytest with Django settings module configured and explicit PYTHONPATH
+        PYTHONPATH=$(pwd):$PYTHONPATH python -m pytest -v
 
   deploy:
     needs: test
@@ -100,12 +103,12 @@ jobs:
         python-version: '3.13'
     
     - name: Install deployment dependencies
-      run: 
+      run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel
     
     - name: Build artifact
-      run: 
+      run: |
         # Create a deployment package
         mkdir -p deploy
         cp -r applications accounts catalog core manage.py requirements.txt deploy/
@@ -120,7 +123,7 @@ jobs:
         
     # This step would be customized based on your actual deployment target
     - name: Deploy
-      run:
+      run: |
         echo "Deploying application to server..."
         # Add your deployment commands here
         # For example: rsync, scp, or calls to cloud provider APIs
