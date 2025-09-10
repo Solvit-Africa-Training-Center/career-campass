@@ -5,6 +5,7 @@ import cloudinary.uploader
 import cloudinary.api
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,7 +19,7 @@ if not SECRET_KEY:
     raise ValueError("DJANGO_SECRET_KEY environment variable is not set")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1')
+DEBUG = False
 
 # Set allowed hosts from environment or default to localhost
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
@@ -94,12 +95,27 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# When DEBUG is True (development), use SQLite database
+if DEBUG:
+    print("Running in DEBUG mode with SQLite database")
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+# When DEBUG is False (production), use PostgreSQL database
+else:
+    print("Running in PRODUCTION mode with PostgreSQL database")
+
+    DATABASES = {
+    "default": dj_database_url.parse(
+        os.getenv("DB_URL"),
+        conn_max_age=600,  # optional: persistent connections
+        ssl_require=True
+    )
+    }
 
 
 # Password validation
