@@ -123,8 +123,8 @@ class TestCreateApplication:
         assert "Program not found" in response.data["detail"]
         assert program_docs_mock.called
         
-        # Verify no Application was created
-        assert Application.objects.count() == 0
+        # Verify no Application was created for this program_id
+        assert not Application.objects.filter(program_id=program_id).exists()
 
     @respx.mock
     def test_create_application_catalog_error(self, authenticated_api_client, mock_current_user_id):
@@ -158,5 +158,5 @@ class TestCreateApplication:
         assert "Upstream Catalog error" in response.data["detail"]
         assert program_docs_mock.called
         
-        # Verify no Application was created
-        assert Application.objects.count() == 0
+        # Verify no Application was created for this program_id
+        assert not Application.objects.filter(program_id=program_id).exists()

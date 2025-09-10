@@ -65,7 +65,7 @@ class TestApplicationFlowIntegration:
         
         # Assertions
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert "Program not found" in response.data["detail"]
+        assert "Program not found" in response.data["error"]["message"]
     
     @patch('applications.integrations.catalog._client')
     def test_resolve_student_required_docs_error_handling(self, mock_client):
@@ -100,56 +100,37 @@ class TestApplicationFlowIntegration:
             mixin.get_object()
 
     @patch('applications.views.get_object_or_404')
+    @patch('applications.views.current_user_id')
     @patch('applications.views.get_student_document')
-    def test_attach_document_flow(self, mock_get_doc, mock_get_obj, authenticated_api_client, mock_current_user_id):
+    def test_attach_document_flow(self, mock_get_doc, mock_user_id, mock_get_obj, authenticated_api_client):
         """Test the document attachment flow after fixing the duplicate method"""
         # Setup mocks
-        student_id = mock_current_user_id.return_value  # Use the mocked student ID
+        student_id = str(uuid.uuid4())
+        mock_user_id.return_value = student_id
         
-        # Create a real application object for the test
-        app_id = uuid.uuid4()
         app = MagicMock()
-        app.id = app_id
         app.student_id = student_id
-        app.status = Status.DRAFT
         mock_get_obj.return_value = app
         
-        # Create a mock required document
-        required_doc = MagicMock()
-        required_doc.max_items = 10
+        doc_type_id = str(uuid.uuid4())
+        student_doc_id = str(uuid.uuid4())
         
-        # Add a patch for the required document lookup
-        with patch('applications.models.ApplicationRequiredDocument.objects.get',
-                  return_value=required_doc):
-            
-            doc_type_id = str(uuid.uuid4())
-            student_doc_id = str(uuid.uuid4())
-            
-            mock_get_doc.return_value = {
-                "user_id": student_id,
-                "status": "clean",
-                "doc_type_id": doc_type_id
-            }
-            
-            # Make request
-            url = reverse('applications-attach-document', args=[str(app_id)])
-            data = {
-                "doc_type_id": doc_type_id,
-                "student_document_id": student_doc_id
-            }
-            
-            # This will use the correct attach_document method after our fix
-            with patch('applications.models.ApplicationDocument.objects.filter',
-                      return_value=MagicMock(count=lambda: 0)):
-                with patch('applications.models.ApplicationDocument.objects.create') as mock_create:
-                    # Print the response to debug
-                    response = authenticated_api_client.post(url, data, format='json')
-                    print(f"Response status: {response.status_code}")
-                    print(f"Response data: {response.data}")
-                    
-                    # We're still checking that the right methods were called,
-                    # but let's not fail on the create assertion since we're debugging
-                    mock_get_obj.assert_called_once()
-                    mock_get_doc.assert_called_once_with(student_doc_id)
-                    # Just check if it was called at all for now
-                    print(f"Create call count: {mock_create.call_count}")
+        mock_get_doc.return_value = {
+            "user_id": student_id,
+            "status": "clean",
+            "doc_type_id": doc_type_id
+        }
+        
+        # Make request
+        url = reverse('applications-attach-document', args=[str(uuid.uuid4())])
+        data = {
+            "doc_type_id": doc_type_id,
+            "student_document_id": student_doc_id
+        }
+        
+        # This will use the correct attach_document method after our fix
+        response = authenticated_api_client.post(url, data, format='json')
+        
+        # Check that the method was called correctly
+        mock_get_obj.assert_called_once()
+        mock_get_doc.assert_called_once_with(student_doc_id)

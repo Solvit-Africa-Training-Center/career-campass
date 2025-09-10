@@ -45,7 +45,16 @@ def log_action(action, user_id, app_id=None, outcome="success", extra=None, star
         log_data["app_id"] = str(app_id)
         
     if extra:
-        log_data.update(extra)
+        # Filter out non-serializable objects from extra
+        filtered_extra = {}
+        for key, value in extra.items():
+            try:
+                json.dumps({key: value})  # Test if serializable
+                filtered_extra[key] = value
+            except (TypeError, OverflowError):
+                filtered_extra[key] = str(value)  # Convert to string if not serializable
+        
+        log_data.update(filtered_extra)
         
     if start_time:
         log_data["elapsed_ms"] = int((time.time() - start_time) * 1000)

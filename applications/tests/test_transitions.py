@@ -44,7 +44,7 @@ class TestApplicationTransitions:
         
         # Assert
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert 'missing_documents' in response.data
+        assert 'missing_documents' in response.data['error']['data']
         
     def test_transition_happy_path(self, authenticated_api_client, mock_current_user_id):
         """Test the complete happy path of transitions"""
