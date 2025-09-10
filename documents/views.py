@@ -1,8 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.core.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema_view, extend_schema
-from .models import DocumentType, UserDocument, ProgramDocument,ApplicationDocument
-from .serializers import DocumentTypeSerializer, UserDocumentSerializer, ProgramDocumentSerializer,ApplicationDocumentSerializer
+from .models import DocumentType, UserDocument, ProgramDocument, ApplicationDocument
+from .serializers import DocumentTypeSerializer, UserDocumentSerializer, ProgramDocumentSerializer, ApplicationDocumentSerializer
 
 
 class BaseActiveViewSet(viewsets.ModelViewSet):
@@ -42,6 +44,19 @@ class DocumentTypeViewSet(BaseActiveViewSet):
 class UserDocumentViewSet(BaseActiveViewSet):
     queryset = UserDocument.objects.all()
     serializer_class = UserDocumentSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(user=self.request.user)
+        return queryset
+    
+    def perform_create(self, serializer):
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            if not serializer.validated_data.get('file'):
+                raise ValidationError("Document file is required for regular users.")
+        serializer.save()
 
 
 @extend_schema_view(

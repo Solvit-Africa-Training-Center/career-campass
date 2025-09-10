@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from catalog.models import Program
 from cloudinary_storage.storage import MediaCloudinaryStorage
 
@@ -23,11 +24,15 @@ class DocumentType(models.Model):
 class UserDocument(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    document_type = models.OneToOneField(DocumentType, on_delete=models.CASCADE)
+    document_type = models.ForeignKey(DocumentType, on_delete=models.CASCADE)
     file = models.FileField(upload_to="career/documents/", storage=MediaCloudinaryStorage(), null=True, blank=True)
     issued_date = models.DateField()
     expires_date = models.DateField()
     is_active = models.BooleanField(default=True)
+    
+    def clean(self):
+        if not (self.user.is_staff or self.user.is_superuser) and not self.file:
+            raise ValidationError("Regular users must upload a document file.")
     
     def __str__(self):
         return f"{self.user} - {self.document_type.name}"
@@ -35,6 +40,7 @@ class UserDocument(models.Model):
     class Meta:
         db_table = 'user_documents'
         ordering = ['-issued_date']
+        unique_together = ['user', 'document_type']
 
 class ProgramDocument(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
