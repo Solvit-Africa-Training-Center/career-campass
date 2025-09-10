@@ -15,6 +15,8 @@ from rest_framework.decorators import action
 from core.utils.uuid_helpers import parse_uuid, is_valid_uuid
 from core.utils.view_decorators import validate_uuid_params
 from core.mixins.uuid_viewset import UUIDViewSetMixin
+from drf_spectacular.utils import extend_schema_view, extend_schema
+
 
 logger = logging.getLogger(__name__)
 from .models import (
@@ -125,7 +127,7 @@ def get_user_role(request) -> Optional[str]:
         request: The HTTP request object
         
     Returns:
-        Optional[str]: The user's role as a string ('student' or 'staff') or None if not specified
+        Optional[str]: The user's role as a string ('student' or 'staff') or None if not specified                                                                                             
     """
     return request.headers.get('X-Role')
 
@@ -153,7 +155,7 @@ TRANSITION_RULES = {
         'allowed_roles': ['staff'],
     },
     'withdraw': {
-        'allowed_from_statuses': [Status.DRAFT, Status.SUBMITTED, Status.UNDER_REVIEW, Status.OFFER],
+        'allowed_from_statuses': [Status.DRAFT, Status.SUBMITTED, Status.UNDER_REVIEW, Status.OFFER],                                                                                          
         'to_status': Status.WITHDRAWN,
         'allowed_roles': ['student'],
     },
@@ -165,6 +167,9 @@ TRANSITION_RULES = {
 }
 
 
+@extend_schema(
+    tags=['Applications']
+)
 class ApplicationViewSet(UUIDViewSetMixin, viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
