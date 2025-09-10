@@ -10,20 +10,42 @@ class TestApplicationsFlow:
     Test the critical path for applications creation and management
     """
     
-    def test_application_create_authenticated(self, mocker):
+    def test_application_create_authenticated(self, monkeypatch):
         """Test application creation with a mocked authenticated user"""
         # Mock the JWT authentication
         client = APIClient()
         user_id = uuid.uuid4()
-        client.credentials(HTTP_AUTHORIZATION=f'Bearer fake_token')
+        
+        # Create a mock user object for authentication
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        mock_user = type('MockUser', (object,), {'id': 1, 'pk': 1, 'is_authenticated': True})
+        
+        # Force authenticate the client
+        client.force_authenticate(user=mock_user)
         
         # Mock the current_user_id function to return our test user
-        mocker.patch('applications.views.current_user_id', return_value=str(user_id))
+        def mock_current_user_id(request):
+            return str(user_id)
+        
+        # Mock the get_student_uuid function
+        def mock_get_student_uuid(user_id):
+            return uuid.UUID(str(user_id))
+            
+        monkeypatch.setattr('applications.views.current_user_id', mock_current_user_id)
+        monkeypatch.setattr('accounts.utils.get_student_uuid', mock_get_student_uuid)
         
         # Mock the catalog integration
         program_reqs = [{"doc_type_id": str(uuid.uuid4()), "is_mandatory": True, "min_items": 1, "max_items": 1}]
-        mocker.patch('applications.views.get_program_required_documents', return_value=program_reqs)
-        mocker.patch('applications.views.resolve_student_required_documents', return_value=[])
+        
+        def mock_get_program_required_documents(program_id):
+            return program_reqs
+            
+        def mock_resolve_student_required_documents(student_id):
+            return []
+            
+        monkeypatch.setattr('applications.views.get_program_required_documents', mock_get_program_required_documents)
+        monkeypatch.setattr('applications.views.resolve_student_required_documents', mock_resolve_student_required_documents)
         
         # Prepare request data
         program_id = str(uuid.uuid4())
@@ -34,7 +56,7 @@ class TestApplicationsFlow:
         }
         
         # Make the request
-        response = client.post(reverse('application-list'), request_data, format='json')
+        response = client.post(reverse('applications-list'), request_data, format='json')
         
         # Assert the response
         assert response.status_code == 201
@@ -63,7 +85,7 @@ class TestApplicationsFlow:
         }
         
         # Make the request without auth credentials
-        response = client.post(reverse('application-list'), request_data, format='json')
+        response = client.post(reverse('applications-list'), request_data, format='json')
         
         # Assert the response
         assert response.status_code == 401

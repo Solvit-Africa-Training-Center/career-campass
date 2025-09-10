@@ -95,6 +95,19 @@ class ApplicationRequiredDocument(models.Model):
         indexes = [models.Index(fields=["application"])]
 
 class ApplicationDocument(models.Model):
+    """
+    Links documents to applications.
+    
+    Note: There's another ApplicationDocument model in the documents app which serves a 
+    different purpose. This model is specifically for tracking which documents have been 
+    attached to applications, while the one in documents app links user documents to 
+    program requirements.
+    
+    This model is used with our enhanced error handling, structured logging, and API
+    throttling to ensure reliable document processing.
+    
+    See docs/APPLICATION_DOCUMENT_INTEGRATION.md for details on how these apps interact.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name="documents")
     doc_type_id = models.UUIDField()

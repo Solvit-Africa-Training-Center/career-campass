@@ -50,7 +50,7 @@ def create_test_application(student_id=None, program_id=None, intake_id=None, st
     )
 
 @pytest.fixture
-def authenticated_api_client(api_client, monkeypatch):
+def authenticated_api_client(api_client, monkeypatch, mock_current_user_id):
     """Return an authenticated API client for testing."""
     
     # Create a simpler approach by directly mocking request.user
@@ -60,12 +60,23 @@ def authenticated_api_client(api_client, monkeypatch):
     # This avoids database operations and potential issues with AUTH_USER_MODEL
     class MockUser:
         id = 1
+        pk = 1  # Add this for UserRateThrottle that uses request.user.pk
         is_authenticated = True
         
     mock_user = MockUser()
     
     # Force authenticate the API client
     api_client.force_authenticate(user=mock_user)
+    
+    # Set a consistent student UUID for this test session
+    student_uuid = str(uuid.uuid4())
+    mock_current_user_id.return_value = student_uuid
+    
+    # Also mock the get_student_uuid function to return our mock UUID
+    def mock_get_student_uuid(user_id):
+        return uuid.UUID(student_uuid)
+    
+    monkeypatch.setattr('accounts.utils.get_student_uuid', mock_get_student_uuid)
     
     # Return the authenticated client
     return api_client

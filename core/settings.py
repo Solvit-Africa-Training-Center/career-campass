@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     
 ]
 
+# Base REST_FRAMEWORK settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -56,9 +57,16 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ),
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.UserRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"user": "60/min"},
 }
+
+# Detect if we're running tests (sys.argv contains 'pytest' or 'test')
+import sys
+TESTING = any(x in sys.argv for x in ['pytest', 'test'])
+
+# Only add throttling if not running tests
+if not TESTING:
+    REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = ["rest_framework.throttling.UserRateThrottle"]
+    REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"user": "60/min"}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

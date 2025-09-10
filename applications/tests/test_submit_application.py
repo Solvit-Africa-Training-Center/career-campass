@@ -78,9 +78,9 @@ class TestSubmitApplication:
         
         # Assert
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert 'missing_documents' in response.data
-        assert len(response.data['missing_documents']) == 1
-        assert response.data['missing_documents'][0]['doc_type_id'] == str(req_doc.doc_type_id)
+        assert 'missing_documents' in response.data['error']['data']
+        assert len(response.data['error']['data']['missing_documents']) == 1
+        assert response.data['error']['data']['missing_documents'][0]['doc_type_id'] == str(req_doc.doc_type_id)
         
         # Verify status was not changed
         app.refresh_from_db()
@@ -102,7 +102,7 @@ class TestSubmitApplication:
         
         # Assert
         assert response.status_code == status.HTTP_409_CONFLICT
-        assert 'cannot be submitted' in response.data['detail']
+        assert 'cannot be submitted' in response.data['error']['message']
 
     def test_submit_application_not_owner(self, authenticated_api_client, mock_current_user_id):
         """Test application submission fails when user is not the application owner"""
