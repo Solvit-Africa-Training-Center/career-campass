@@ -10,6 +10,8 @@ from rest_framework.decorators import action
 from core.utils.uuid_helpers import parse_uuid, is_valid_uuid
 from core.utils.view_decorators import validate_uuid_params
 from core.mixins.uuid_viewset import UUIDViewSetMixin
+from drf_spectacular.utils import extend_schema_view, extend_schema
+
 
 logger = logging.getLogger(__name__)
 from .models import (
@@ -57,7 +59,9 @@ def current_user_id(request) -> Optional[str]:
         logger.error(f"Error getting student UUID: {str(e)}")
         return None
 
-
+@extend_schema(
+    tags=['Applications']
+)
 class ApplicationViewSet(UUIDViewSetMixin, viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
