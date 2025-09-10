@@ -10,8 +10,7 @@
 ## Environment Setup
 
 1. Clone the repository:
-   ```
-   bash
+   ```bash
    git clone https://github.com/Solvit-Africa-Training-Center/career-campass.git
    cd career-campass
    ```

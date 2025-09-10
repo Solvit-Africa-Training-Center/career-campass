@@ -2,29 +2,74 @@ name: Django CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/*" ]
   pull_request:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
+      max-parallel: 2
       matrix:
-        python-version: [3.14.0-rc.2, 3.8, 3.9]
+        python-version: [3.13, 3.12]
+
+    env:
+      DJANGO_SECRET_KEY: 'github-actions-test-key-not-for-production'
+      DJANGO_DEBUG: 'True'
+      DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1'
+      DJANGO_SETTINGS_MODULE: 'core.settings'
 
     steps:
     - uses: actions/checkout@v4
+    
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Set PYTHONPATH
+      run: |
+        echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
+    
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    
+    - name: Run Django Migrations
+      run: |
+        python manage.py migrate --no-input
+        python manage.py migrate catalog --no-input
+        python manage.py migrate applications --no-input
+    
     - name: Run Tests
       run: |
-        python manage.py test
+        python -m pytest -v
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+    
+    - name: Build artifact
+      run: |
+        mkdir -p deploy
+        cp -r applications accounts catalog core manage.py requirements.txt deploy/
+        cd deploy && zip -r ../career-campass-deploy.zip .
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: django-app
+        path: career-campass-deploy.zip
+        retention-days: 5

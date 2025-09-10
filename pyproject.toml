@@ -46,3 +46,11 @@ dependencies = [
     "uritemplate==4.2.0",
     "urllib3==2.5.0",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+python_files = "test_*.py"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]

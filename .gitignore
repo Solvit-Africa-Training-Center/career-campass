@@ -9,9 +9,19 @@ sqlite.db
 *.sqlite3
 *.db
 *.log
+# Only keep __init__.py in migrations folders
 */migrations/*
 !*/migrations/__init__.py
 /.pytest_cache/
-uv.lock
-.python-version
-pyproject.toml
+./uv.lock
+./.python-version
+./pyproject.toml
+
+# Auth and token files (sensitive)
+access_token.txt
+login_response.json
+login_tokens.json
+token.json
+
+# Development scripts
+setup_and_test.sh
