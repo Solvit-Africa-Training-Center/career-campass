@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cloudinary',
+    "corsheaders",
     'cloudinary_storage',
     'rest_framework',
     'drf_spectacular',
@@ -77,6 +78,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -265,3 +268,5 @@ DOCUMENTS_BASE_URL = os.getenv("DOCUMENTS_BASE_URL", "http://127.0.0.1:8000/docu
 # Defensive timeout for HTTP calls so our request doesn't hang forever.
 HTTP_CLIENT_TIMEOUT = float(os.getenv("HTTP_CLIENT_TIMEOUT", "6.0"))
 
+
+CORS_ALLOW_ALL_ORIGINS=True
