@@ -51,6 +51,10 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    # UUID as primary key for modern microservice architecture
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,
+                         help_text="UUID primary key for cross-service references")
+    
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
     is_active = models.BooleanField(default=True)
@@ -105,7 +109,6 @@ class Profile(models.Model):
     
 class Student(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True, help_text="UUID used for cross-service references")
     passport_number = models.CharField(unique=True, max_length=100, blank=True, null=True)
     national_id = models.CharField(unique=True, max_length=100, blank=True, null=True)
     current_level = models.CharField(max_length=100, choices=[("high school", "High School"),("undergraduate", "Undergraduate"), ("graduate", "Graduate"), ("phd", "PhD")], blank=True)
@@ -116,6 +119,11 @@ class Student(models.Model):
 
     def __str__(self):
         return f"Student: {self.user.email}"
+    
+    @property
+    def uuid(self):
+        """Return the user's UUID for cross-service references"""
+        return self.user.id
     
 
 class Agent(models.Model):

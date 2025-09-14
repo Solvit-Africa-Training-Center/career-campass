@@ -5,7 +5,21 @@
 - Access to Azure subscription
 - Django project ready for deployment
 
-## Step 1: Login to Azure and verify allowed regions
+## Step 1: Finding Available Regions for Your Subscription
+
+Azure subscriptions (especially free, student, or trial accounts) often have region restrictions. The error you encountered indicates your subscription can't deploy to certain regions.
+
+### Method 1: Use our helper script
+
+```bash
+# Make the script executable
+chmod +x scripts/find_allowed_regions.sh
+
+# Run the script to find allowed regions
+./scripts/find_allowed_regions.sh
+```
+
+### Method 2: Manual checking
 
 ```bash
 # Login to Azure
@@ -13,17 +27,27 @@ az login
 
 # List available regions for your subscription
 az account list-locations -o table
+
+# Check App Service availability
+az provider show --namespace Microsoft.Web --query "resourceTypes[?resourceType=='sites'].locations" -o json
 ```
+
+Common regions that might work for limited subscriptions:
+- eastus
+- westus
+- northeurope
+- southeastasia
+- australiaeast
 
 ## Step 2: Create Azure resources in an allowed region
 
-Replace `East US` with one of the allowed regions from your subscription:
+Replace `East US` with one of the allowed regions from your subscription that you found in Step 1:
 
 ```bash
 # Set variables
-RESOURCE_GROUP="career-compass"
-LOCATION="East US"  # Try East US, West Europe, or another available region
-APP_NAME="c-compass"
+RESOURCE_GROUP="career-compass-group"  # Changed from career-compass
+LOCATION="East US"  # Replace with an allowed region from Step 1
+APP_NAME="career-compass"
 APP_SERVICE_PLAN="ASP-careercompass"
 
 # Create resource group
@@ -43,6 +67,15 @@ az webapp create --name $APP_NAME \
     --runtime "PYTHON:3.13"
 ```
 
+### Troubleshooting Regional Restrictions
+
+If you continue to get errors about regional restrictions:
+
+1. Try multiple different regions until you find one that works
+2. Use the Azure Portal to create resources and let it suggest available regions
+3. Contact Azure support to request access to specific regions
+4. Consider upgrading from a free/student account to a pay-as-you-go subscription
+
 ## Step 3: Configure app settings
 
 ```bash
@@ -54,6 +87,22 @@ az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GRO
     DJANGO_ALLOWED_HOSTS="$APP_NAME.azurewebsites.net,localhost,127.0.0.1" \
     DJANGO_SETTINGS_MODULE="core.settings"
 ```
+
+### Setting up Python in Azure App Service
+
+Azure App Service needs specific configurations for Python applications:
+
+```bash
+# Configure Python version
+az webapp config set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+    --linux-fx-version "PYTHON|3.13"
+
+# Enable startup command
+az webapp config set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+    --startup-file "gunicorn --bind=0.0.0.0 --workers=4 core.wsgi:application"
+```
+
+Make sure gunicorn is in your requirements.txt file.
 
 ## Step 4: Deploy using GitHub Actions
 
