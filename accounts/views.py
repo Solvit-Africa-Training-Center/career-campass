@@ -146,6 +146,18 @@ class ProfileViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
+    
+    def perform_create(self, serializer):
+        """
+        Automatically assign the current authenticated user to the profile.
+        This fixes the NOT NULL constraint error for user_id.
+        """
+        # Check if profile already exists for this user
+        if Profile.objects.filter(user=self.request.user).exists():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Profile already exists for this user")
+        
+        serializer.save(user=self.request.user)
 
 @extend_schema(tags=["Students"], description="Retrieve, create, update or soft-delete students.")
 class StudentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
@@ -153,6 +165,18 @@ class StudentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
+    
+    def perform_create(self, serializer):
+        """
+        Automatically assign the current authenticated user to the student.
+        This fixes the NOT NULL constraint error for user_id.
+        """
+        # Check if student already exists for this user
+        if Student.objects.filter(user=self.request.user).exists():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Student record already exists for this user")
+        
+        serializer.save(user=self.request.user)
 
 @extend_schema(tags=["Agents"], description="Retrieve, create, update or soft-delete agents.")
 class AgentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
@@ -160,6 +184,18 @@ class AgentViewSet(SoftDeleteMixin, viewsets.ModelViewSet):
     serializer_class = AgentSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
+    
+    def perform_create(self, serializer):
+        """
+        Automatically assign the current authenticated user to the agent.
+        This fixes the NOT NULL constraint error for user_id.
+        """
+        # Check if agent already exists for this user
+        if Agent.objects.filter(user=self.request.user).exists():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Agent record already exists for this user")
+        
+        serializer.save(user=self.request.user)
 
 
 

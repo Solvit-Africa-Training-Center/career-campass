@@ -15,6 +15,7 @@ class RoleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     roles = RoleSerializer(many=True, read_only=True)
+    id = serializers.UUIDField(read_only=True)  # Explicitly handle UUID primary key
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
@@ -47,11 +48,12 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class StudentSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    uuid = serializers.UUIDField(read_only=True)  # Property that returns user.id
 
     class Meta:
         model = Student
         fields = (
-            "id", "user", "passport_number", "national_id",
+            "id", "user", "uuid", "passport_number", "national_id",
             "current_level", "target_countries", "intended_major", "targeted_fields"
         )
         
@@ -75,7 +77,7 @@ class AgentSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    id = serializers.CharField(max_length=15, read_only=True)
+    id = serializers.UUIDField(read_only=True)  # Changed to UUIDField for UUID primary key
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
@@ -117,17 +119,16 @@ class RegisterRequestSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)     # hash the password
-        user.is_active = True           # allow login only after verification if needed
-        user.is_verified = False        # email verification pending
+        user = User.objects.create_user(password=password, **validated_data)
+        user.is_active = True
+        user.is_verified = False
         user.save()
-        return user    
+        return user
     
 class UserRoleSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()  # Changed from UUIDField to IntegerField
+    user_id = serializers.UUIDField()  # Back to UUIDField now that User uses UUID primary key
     role_ids = serializers.ListField(
-        child=serializers.IntegerField(),  # Changed from UUIDField to IntegerField
+        child=serializers.IntegerField(),  # Roles still use integer IDs
         help_text="List of role IDs to assign or remove"
     )
 

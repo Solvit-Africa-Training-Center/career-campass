@@ -5,6 +5,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  AZURE_REGION: "East US"  # Try this region instead
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -39,7 +42,8 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'c-compass'
+        app-name: 'career-compass'
+        resource-group-name: 'career-compass-group'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ./career-campass-deploy.zip
     
@@ -48,13 +52,36 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
+    # Create resources in allowed region
+    - name: Create Azure Resources
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          echo "Creating resource group if it doesn't exist..."
+          az group create --name career-compass-group --location "${{ env.AZURE_REGION }}" --only-show-errors || echo "Resource group exists or couldn't be created in this region"
+          
+          echo "Creating app service plan..."
+          az appservice plan create --name ASP-careercompass \
+            --resource-group career-compass-group \
+            --sku B1 \
+            --location "${{ env.AZURE_REGION }}" \
+            --is-linux \
+            --only-show-errors || echo "App service plan exists or couldn't be created in this region"
+            
+          echo "Creating web app if it doesn't exist..."
+          az webapp create --name career-compass \
+            --resource-group career-compass-group \
+            --plan ASP-careercompass \
+            --runtime "PYTHON:3.13" \
+            --only-show-errors || echo "Web app exists or couldn't be created in this region"
+    
     - name: Configure App Settings
       uses: azure/CLI@v1
       with:
         inlineScript: |
-          az webapp config appsettings set --name c-compass --resource-group career-compass \
+          az webapp config appsettings set --name career-compass --resource-group career-compass-group \
           --settings \
           DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
           DJANGO_DEBUG="False" \
-          DJANGO_ALLOWED_HOSTS="c-compass.azurewebsites.net,localhost,127.0.0.1" \
+          DJANGO_ALLOWED_HOSTS="career-compass.azurewebsites.net,localhost,127.0.0.1" \
           DJANGO_SETTINGS_MODULE="core.settings"
