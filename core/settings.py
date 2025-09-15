@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'applications',
     'catalog',
     'documents',
+    'assessments',
     
 ]
 

@@ -180,14 +180,23 @@ TRANSITION_RULES = {
     tags=['Applications']
 )
 class ApplicationViewSet(UUIDViewSetMixin, viewsets.ViewSet):
+    serializer_class = ApplicationSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    def list(self, request):
-        student_id = current_user_id(request)
+    def get_queryset(self):
+        student_id = current_user_id(self.request)
         if not student_id:
-            return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
-        qs = Application.objects.filter(student_id=student_id).order_by("-created_at")[:50]
+            return Application.objects.none()
+        return Application.objects.filter(student_id=student_id)
+
+    def list(self, request):
+        qs = self.get_queryset().order_by("-created_at")[:50]
         return Response([{"id": str(a.id), "status": a.status} for a in qs])
+    
+    def retrieve(self, request, pk=None):
+        instance = get_object_or_404(self.get_queryset(), pk=pk)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     @transaction.atomic
     def create(self, request):
