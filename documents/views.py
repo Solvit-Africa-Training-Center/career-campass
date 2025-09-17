@@ -79,4 +79,4 @@ class ProgramDocumentViewSet(BaseActiveViewSet):
 )
 class ApplicationDocumentViewSet(BaseActiveViewSet):
     queryset=ApplicationDocument.objects.all()
-    serializer= ApplicationDocumentSerializer    
+    serializer_class = ApplicationDocumentSerializer
