@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'catalog',
     'documents',
     'assessments',
+    'chatbot',
     
 ]
 
