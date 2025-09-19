@@ -25,3 +25,7 @@ token.json
 
 # Development scripts
 setup_and_test.sh
+
+# Testing files that shouldn't be in production
+scripts/test_chatbot_manual.*
+**/test_basic.py
