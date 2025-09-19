@@ -3,7 +3,7 @@ import requests
 from django.conf import settings
 
 class GeminiService:
-    API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     
     @classmethod
     def _get_api_key(cls):
