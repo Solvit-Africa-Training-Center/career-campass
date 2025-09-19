@@ -24,6 +24,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+			tags=["AI chatbot"],
         description="Get full chat history for a session",
         responses={200: ChatMessageSerializer(many=True)},
     )
@@ -35,6 +36,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
+			tags=["AI chatbot"],
         description="End a chat session. Marks it inactive.",
         responses={200: OpenApiResponse(description="Session ended")},
     )
@@ -52,6 +54,7 @@ class ChatMessageViewSet(viewsets.ViewSet):
 	permission_classes = [IsAuthenticated]
 
 	@extend_schema(
+			tags=["AI chatbot"],
         description="Send a message in a chat session and receive bot reply",
         request=SendMessageSerializer,
         responses={
