@@ -15,3 +15,10 @@ class SendMessageSerializer(serializers.Serializer):
     session_id = serializers.UUIDField()
     message = serializers.CharField()
     context = serializers.JSONField(required=False)
+
+
+
+class BotReplySerializer(serializers.Serializer):
+    reply = serializers.CharField()
+    actions = serializers.ListField(child=serializers.CharField(), required=False)
+    follow_up_questions = serializers.ListField(child=serializers.CharField(), required=False)
