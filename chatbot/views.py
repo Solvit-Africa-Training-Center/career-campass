@@ -17,17 +17,18 @@ from .serializers import (
 )
 from .services.gemini import GeminiService
 
-
+@extend_schema(
+			tags=["AI chatbot"],
+			request=ChatSessionSerializer,
+        description="full chat history for a session",
+        responses={200: ChatMessageSerializer(many=True)},
+    )
 class ChatSessionViewSet(viewsets.ModelViewSet):
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionSerializer
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(
-			tags=["AI chatbot"],
-        description="Get full chat history for a session",
-        responses={200: ChatMessageSerializer(many=True)},
-    )
+    
     @action(detail=True, methods=["get"])
     def history(self, request, pk=None):
         session = self.get_object()
@@ -35,11 +36,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
         serializer = ChatMessageSerializer(messages, many=True)
         return Response(serializer.data)
 
-    @extend_schema(
-			tags=["AI chatbot"],
-        description="End a chat session. Marks it inactive.",
-        responses={200: OpenApiResponse(description="Session ended")},
-    )
+    
     @action(detail=True, methods=["post"])
     def end(self, request, pk=None):
         session = self.get_object()

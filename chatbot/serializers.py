@@ -5,7 +5,7 @@ class ChatSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatSession
         fields = ['id', 'user_id', 'role', 'created_at', 'last_active', 'is_active']
-        read_only_fields = ['user_id', 'created_at', 'last_active', 'is_active']
+        read_only_fields = [ 'created_at', 'last_active', 'is_active']
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
