@@ -8,10 +8,13 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)
 def enforce_user_documents(sender, instance, created, **kwargs):
-    """Enforce document requirements for non-admin/staff users"""
-    if created and not (instance.is_staff or instance.is_superuser):
+    """Enforce document requirements only for verified users"""
+    if created or not instance.is_verified:
+        # Do not enforce during registration or for unverified users
+        return
+
+    if not (instance.is_staff or instance.is_superuser):
         required_doc_types = DocumentType.objects.filter(is_active=True)
-        
         if required_doc_types.exists() and not UserDocument.objects.filter(
             user=instance, is_active=True
         ).exists():
